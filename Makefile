@@ -4,9 +4,16 @@ all: $(EXEC)
 
 CC ?= gcc
 CFLAGS = \
-	-std=c99 -Wall -O0 -pg -g
+	-std=c99 -Wall -O0 -g
 LDFLAGS = \
 	-lm
+	
+ifeq ($(PROFILE),1)
+PROF_FLAGS = -pg
+
+CFLAGS += $(PROF_FLAGS)
+LDFLAGS += $(PROF_FLAGS) 
+endif
 
 OBJS := \
 	objects.o \
