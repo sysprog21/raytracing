@@ -246,9 +246,11 @@ static double ray_hit_object(const point3 e, const point3 d,
             continue;
 
         if (rayRectangularIntersection(biased_e, d, &(rec->element), normal,
-                                       &t0, &t1) && t1<nearest)
+                                       &t0, &t1) && t1<nearest) {
             /* hit is closest so far */
             *hit_rectangular = rec;
+            nearest = t1;
+        }
     }
 
     /* check the spheres */
@@ -260,6 +262,7 @@ static double ray_hit_object(const point3 e, const point3 d,
                                   &t0, &t1) && t1<nearest) {
             *hit_sphere = sphere;
             *hit_rectangular = NULL;
+            nearest = t1;
         }
     }
 
