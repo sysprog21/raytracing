@@ -21,119 +21,30 @@ static int raySphereIntersection(const point3 ray_e,
                                  point3 surface_normal,
                                  double *t0, double *t1)
 {
-    point3 S, p;
-    subtract_vector(ray_e, sph->center, S);
-    double A = dot_product(ray_d, ray_d);
-    double B = -2.0 * dot_product(S, ray_d);
-    double C = dot_product(S, S) - sph->radius * sph->radius;
+    point3 l, p;
+    subtract_vector(sph->center, ray_e, l);
+	double s = dot_product(l, ray_d);
+	double l2 = dot_product(l, l);
+	double r2 = sph->radius*sph->radius;
 
-    double D = B * B - 4 * A * C;
-    if (D < 0) return 0;
-
-    int sign = (C < 0.0) ? 1 : -1;
-    double distance = (-B + sign * sqrt(D)) / 2.f;
-    *t1 = distance;
-
-    /* calculate the surface normal */
-    /* p(t) = e + td */
-    multiply_vector(ray_d, distance, p);
-    add_vector(p, ray_e, p);
+	if(s<0 && l2 > r2)
+		return 0;
+	float m2 = l2 - s*s;
+	if(m2>r2)
+		return 0;
+	float q = sqrt(r2 - m2);
+	if(l2>r2)
+		*t1 = s - q;
+	else
+		*t1 = s + q;
+    // p=e+t1*d
+    multiply_vector(ray_d, *t1, p);
+    add_vector(ray_e, p, p);
 
     subtract_vector(p, sph->center, surface_normal);
-    multiply_vector(surface_normal, -1.0, surface_normal);
     normalize(surface_normal);
 
-    return 1;
-}
-
-/* @brief Find max amplitude of surface normal */
-static int findMax(double a[3])
-{
-    int idx = 0;
-    double max = sqrt(SQUARE(a[0]));
-    for (int i = 0; i < 3; i++) {
-        double temp = sqrt(SQUARE(a[i]));
-        if (temp > max) {
-            max = temp;
-            idx = i;
-        }
-    }
-    return idx;
-}
-
-/* Get the projection plane by compare the x,y,z absolute value of
- * surface normal
- */
-static void findProjPlane(double a[3], double b[4][3], double d[4][2])
-{
-    switch (findMax(a)) {
-        case 0:
-            d[0][0] = b[0][1];
-            d[0][1] = b[0][2];
-            d[1][0] = b[1][1];
-            d[1][1] = b[1][2];
-            d[2][0] = b[2][1];
-            d[2][1] = b[2][2];
-            d[3][0] = b[3][1];
-            d[3][1] = b[3][2];
-            break;
-        case 1:
-            d[0][0] = b[0][0];
-            d[0][1] = b[0][2];
-            d[1][0] = b[1][0];
-            d[1][1] = b[1][2];
-            d[2][0] = b[2][0];
-            d[2][1] = b[2][2];
-            d[3][0] = b[3][0];
-            d[3][1] = b[3][2];
-            break;
-        case 2:
-            d[0][0] = b[0][0];
-            d[0][1] = b[0][1];
-            d[1][0] = b[1][0];
-            d[1][1] = b[1][1];
-            d[2][0] = b[2][0];
-            d[2][1] = b[2][1];
-            d[3][0] = b[3][0];
-            d[3][1] = b[3][1];
-            break;
-    }
-}
-
-/* @brief Find projection point */
-static void findProjPoint(double a[3], point3 p, double dp[2])
-{
-    switch (findMax(a)) {
-        case 0:
-            dp[0] = p[1];
-            dp[1] = p[2];
-            break;
-        case 1:
-            dp[0] = p[0];
-            dp[1] = p[2];
-            break;
-        case 2:
-            dp[0] = p[0];
-            dp[1] = p[1];
-            break;
-    }
-}
-
-/*
- * @brief PNPOLY: Point Inclusion in Polygon Test
- * originally written by W. Randolph Franklin (WRF)
- * http://www.ecse.rpi.edu/~wrf/Research/Short_Notes/pnpoly.html
- */
-static int pnpoly(int nvert, double *vertx, double *verty, double testx, double testy)
-{
-    int c = 0;
-    for (int i = 0, j = nvert - 1; i < nvert; j = i++) {
-        if (((verty[i]>testy) != (verty[j]>testy)) &&
-                (testx < (vertx[j] - vertx[i]) * (testy - verty[i]) /
-                 (verty[j] - verty[i]) + vertx[i]))
-            c = !c;
-    }
-    return c;
+	return 1;
 }
 
 /* @return 1 means hit, otherwise 0; */
@@ -143,54 +54,80 @@ static int rayRectangularIntersection(const point3 ray_e,
                                       point3 surface_normal,
                                       double *t0, double *t1)
 {
-    double projectPlane[4][2];
-    double projPoint[2];
-    double normal[3];
-    point3 e, d, p;
-    /* Put Vertax #1 to calculate value of D */
-    double D = (rec->normal[0] * rec->vertices[0][0] +
-                rec->normal[1] * rec->vertices[0][1] +
-                rec->normal[2] * rec->vertices[0][2]) * (-1);
-    double temp1 = dot_product(rec->normal, ray_e) + D;
-    double temp2 = dot_product(rec->normal, ray_d);
-    double distance = -1 * (temp1 / temp2);
-    if (distance < *t0 || distance > *t1)
+    point3 e01, e03, p;
+    subtract_vector(rec->vertices[1], rec->vertices[0], e01);
+    subtract_vector(rec->vertices[3], rec->vertices[0], e03);
+
+    cross_product(ray_d, e03, p);
+
+    double det = dot_product(e01, p);
+
+    // Reject rays orthagonal to the normal vector. I.e. rays parallell to the plane.
+    if(det < 1e-4)
+        return 0;
+    
+    double inv_det = 1.0/det;
+
+    point3 s;
+    subtract_vector(ray_e, rec->vertices[0], s);
+
+    double alpha = inv_det * dot_product(s, p);
+
+    if(alpha > 1.0)
+        return 0;
+    if(alpha < 0.0)
         return 0;
 
-    *t1 = distance;
+    point3 q;
+    cross_product(s, e01, q);
 
-    /* p = e + t * d */
-    COPY_POINT3(e, ray_e);
-    COPY_POINT3(d, ray_d);
-    multiply_vector(d, distance, p);
-    add_vector(e, p,p);
+    double beta = inv_det * dot_product(ray_d, q);
+    if(beta > 1.0)
+        return 0;
+    if(beta < 0.0)
+        return 0;
 
+    *t1 = inv_det * dot_product(e03, q);
+
+    point3 intersect;
+    if(alpha + beta > 1.0f) {
+        /* for the second triangle */
+        point3 e23, e21;
+        subtract_vector(rec->vertices[3], rec->vertices[2], e23);
+        subtract_vector(rec->vertices[1], rec->vertices[2], e21);
+        
+        cross_product(ray_d, e21, p);
+
+        det = dot_product(e23, p);
+
+        if(det < 1e-4)
+            return 0;
+
+        inv_det = 1.0/det;
+        subtract_vector(ray_e, rec->vertices[2], s);
+        
+        alpha = inv_det * dot_product(s, p);
+        if(alpha < 0.0)
+            return 0;
+        
+        cross_product(s, e23, q);
+        beta = inv_det * dot_product(ray_d, q);
+
+        if(beta < 0.0)
+            return 0;
+
+        if(beta + alpha > 1.0)
+            return 0;
+ 
+        *t1 = inv_det * dot_product(e21, q);
+    }
+    
+    if(*t1 < 1e-4)
+        return 0;
+    
     COPY_POINT3(surface_normal, rec->normal);
-    COPY_POINT3(normal, rec->normal);
-
-    findProjPoint(normal, p, projPoint);
-    findProjPlane(normal, rec->vertices, projectPlane);
-
-    double S0[4] = {
-        [0] = projectPlane[0][0],
-        [1] = projectPlane[1][0],
-        [2] = projectPlane[2][0],
-        [3] = projectPlane[3][0],
-    };
-
-    double S1[4] = {
-        [0] = projectPlane[0][1],
-        [1] = projectPlane[1][1],
-        [2] = projectPlane[2][1],
-        [3] = projectPlane[3][1],
-    };
-
-    int c = pnpoly(4, S0, S1, projPoint[0], projPoint[1]);
-    if ((temp2 > 0.0f) || (temp2 = 0.0f))
-        return 0; /* Ray and Polygon parallel, intersection rejection */
-    if (c != 0)
-        return 1;
-    return 0;
+    subtract_vector(intersect, ray_e, intersect);
+    return 1;
 }
 
 static void localColor(color local_color,
@@ -298,12 +235,18 @@ static double ray_hit_object(const point3 e, const point3 d,
     *hit_rectangular = NULL;
     *hit_sphere = NULL;
 
+    point3 biased_e;
+    multiply_vector(d, t0, biased_e);
+    add_vector(biased_e, e, biased_e);
+
+    double nearest = t1;
+
     for (rectangular_node rec = rectangulars; rec; rec = rec->next) {
         if (rec == last_rectangular)
             continue;
 
-        if (rayRectangularIntersection(e, d, &(rec->element), normal,
-                                       &t0, &t1))
+        if (rayRectangularIntersection(biased_e, d, &(rec->element), normal,
+                                       &t0, &t1) && t1<nearest)
             /* hit is closest so far */
             *hit_rectangular = rec;
     }
@@ -313,14 +256,12 @@ static double ray_hit_object(const point3 e, const point3 d,
         if (sphere == last_sphere)
             continue;
 
-        if (raySphereIntersection(e, d, &(sphere->element), normal,
-                                  &t0, &t1))
+        if (raySphereIntersection(biased_e, d, &(sphere->element), normal,
+                                  &t0, &t1) && t1<nearest) {
             *hit_sphere = sphere;
+            *hit_rectangular = NULL;
+        }
     }
-
-    /* the sphere would have to have been closer */
-    if (*hit_sphere)
-        *hit_rectangular = NULL;
 
     return t1;
 }
@@ -333,9 +274,9 @@ static void rayConstruction(point3 d, const point3 u, const point3 v,
                             const viewpoint *view, unsigned int width,
                             unsigned int height)
 {
-    double xmin = 0.0175;
+    double xmin = -0.0175;
     double ymin = -0.0175;
-    double xmax = -0.0175;
+    double xmax = 0.0175;
     double ymax = 0.0175;
     double focal = 0.05;
 
@@ -343,8 +284,8 @@ static void rayConstruction(point3 d, const point3 u, const point3 v,
     point3 u_tmp, v_tmp, w_tmp, s;
 
     w_s = focal;
-    u_s = ymax + ((ymin - ymax) * (float)i / (width - 1));
-    v_s = xmax + ((xmin - xmax) * (float)j / (height - 1));
+    u_s = xmin + ((xmax - xmin) * (float)i / (width - 1));
+    v_s = ymax + ((ymin - ymax) * (float)j / (height - 1));
 
     /* s = e + u_s * u + v_s * v + w_s * w */
     multiply_vector(u, u_s, u_tmp);
@@ -367,11 +308,11 @@ static void calculateBasisVectors(point3 u, point3 v, point3 w,
     normalize(w);
 
     /* u = (t x w) / (|t x w|) */
-    cross_product(view->vup, w, u);
+    cross_product(w, view->vup, u);
     normalize(u);
 
     /* v = w x u */
-    cross_product(w, u, v);
+    cross_product(u, w, v);
 
     normalize(v);
 }
@@ -395,7 +336,7 @@ static unsigned int ray_color(const point3 e, int t,
     rectangular_node hit_rec = NULL, light_hit_rec = NULL;
     sphere_node hit_sphere = NULL, light_hit_sphere = NULL;
     double t1 = MAX_DISTANCE, diffuse, specular;
-    point3 p, surface_normal, l, ignore_me, r;
+    point3 p, surface_normal, l, _l, ignore_me, r;
     object_fill fill;
 
     color reflection_part;
@@ -410,7 +351,7 @@ static unsigned int ray_color(const point3 e, int t,
     t1 = ray_hit_object(e, d, t, MAX_DISTANCE, surface_normal, rectangulars,
                         &hit_rec, last_rectangular, spheres, &hit_sphere,
                         last_sphere);
-
+   
     if (!hit_rec && !hit_sphere)
         return 0;
 
@@ -429,17 +370,21 @@ static unsigned int ray_color(const point3 e, int t,
     for (light_node light = lights; light; light = light->next) {
         /* calculate the intersection vector pointing at the light */
         subtract_vector(p, light->element.position, l);
+        multiply_vector(l, -1, _l);
+        normalize(_l);
 
         /* check for intersection with an object. use ignore_me
          * because we don't care about this normal
         */
-        ray_hit_object(p, l, MIN_DISTANCE, MAX_DISTANCE, ignore_me,
+        ray_hit_object(p, _l, MIN_DISTANCE, length(l), ignore_me,
                        rectangulars, &light_hit_rec, hit_rec,
                        spheres, &light_hit_sphere, hit_sphere);
 
-        /* the light was blocked by any objects */
+        /* the light was not block by itself(lit object) */
         if (light_hit_rec || light_hit_sphere)
             continue;
+
+
         compute_specular_and_diffuse(&diffuse, &specular, d, l,
                                      surface_normal, fill.phong_power);
 
@@ -458,8 +403,8 @@ static unsigned int ray_color(const point3 e, int t,
                           hit_rec, hit_sphere)) {
                 multiply_vector(reflection_part, fill.Ks,
                                 reflection_part);
-                add_vector(object_color, reflection_part,
-                           object_color);
+                //add_vector(object_color, reflection_part,
+                //           object_color);
             }
         }
 
@@ -482,8 +427,8 @@ static unsigned int ray_color(const point3 e, int t,
                           hit_sphere)) {
                 multiply_vector(refraction_part, fill.T,
                                 refraction_part);
-                add_vector(object_color, refraction_part,
-                           object_color);
+                //add_vector(object_color, refraction_part,
+                //           object_color);
             }
         }
         protect_color_overflow(object_color);
@@ -503,8 +448,8 @@ void raytracing(uint8_t *pixels, color background_color,
     /* calculate u, v, w */
     calculateBasisVectors(u, v, w, view);
 
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
             rayConstruction(d, u, v, w, i, j, view, width, height);
             if (ray_color(view->vrp, 0.0, d, rectangulars, spheres,
                           lights, object_color,
