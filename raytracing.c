@@ -19,7 +19,7 @@ static int raySphereIntersection(const point3 ray_e,
                                  const point3 ray_d,
                                  const sphere *sph,
                                  point3 surface_normal,
-                                 double *t0, double *t1)
+                                 double *t1)
 {
     point3 l, p;
     subtract_vector(sph->center, ray_e, l);
@@ -52,7 +52,7 @@ static int rayRectangularIntersection(const point3 ray_e,
                                       const point3 ray_d,
                                       rectangular *rec,
                                       point3 surface_normal,
-                                      double *t0, double *t1)
+                                      double *t1)
 {
     point3 e01, e03, p;
     subtract_vector(rec->vertices[1], rec->vertices[0], e01);
@@ -246,7 +246,7 @@ static double ray_hit_object(const point3 e, const point3 d,
             continue;
 
         if (rayRectangularIntersection(biased_e, d, &(rec->element), normal,
-                                       &t0, &t1) && t1<nearest) {
+                                       &t1) && t1<nearest) {
             /* hit is closest so far */
             *hit_rectangular = rec;
             nearest = t1;
@@ -259,7 +259,7 @@ static double ray_hit_object(const point3 e, const point3 d,
             continue;
 
         if (raySphereIntersection(biased_e, d, &(sphere->element), normal,
-                                  &t0, &t1) && t1<nearest) {
+                                  &t1) && t1<nearest) {
             *hit_sphere = sphere;
             *hit_rectangular = NULL;
             nearest = t1;
