@@ -406,8 +406,8 @@ static unsigned int ray_color(const point3 e, int t,
                           hit_rec, hit_sphere)) {
                 multiply_vector(reflection_part, fill.Ks,
                                 reflection_part);
-                //add_vector(object_color, reflection_part,
-                //           object_color);
+                add_vector(object_color, reflection_part,
+                           object_color);
             }
         }
 
@@ -430,8 +430,8 @@ static unsigned int ray_color(const point3 e, int t,
                           hit_sphere)) {
                 multiply_vector(refraction_part, fill.T,
                                 refraction_part);
-                //add_vector(object_color, refraction_part,
-                //           object_color);
+                add_vector(object_color, refraction_part,
+                           object_color);
             }
         }
         protect_color_overflow(object_color);
