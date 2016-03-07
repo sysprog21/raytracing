@@ -11,7 +11,7 @@ sphere sphere1 = {
     .radius = 2,
     .sphere_fill = {
         .fill_color = { 0.8, 0.8, 0.8 },
-        .Kd = 0.8, .Ks = 0.8, .T = 0.2,
+        .Kd = 0.8, .Ks = 0.8, .T = 0.2, .R=1.0,
         .index_of_refraction = 0.0, .phong_power = 30.0
     }
 };
@@ -23,7 +23,7 @@ sphere sphere2 = {
     .radius = 2,
     .sphere_fill = {
         .fill_color = { 0.8, 0.6, 0.4 },
-        .Kd = 0.75, .Ks = 0.0, .T = 0.2,
+        .Kd = 0.75, .Ks = 0.0, .T = 0.2, .R=0.0,
         .index_of_refraction = 0.0, .phong_power = 30.0
     }
 };
@@ -46,8 +46,8 @@ rectangular rectangular1 = {
     },
     .normal = { 0.0, 1.0, 0.0 },
     .rectangular_fill = {
-        .fill_color = { 0.8, 0.8, 0.8 },
-        .Kd = 0.8, .Ks = 0.0, .T = 0.0,
+        .fill_color = { 0.6, 0.6, 0.6 },
+        .Kd = 0.8, .Ks = 0.0, .T = 0.0, .R=0.5,
         .index_of_refraction = 0.0, .phong_power = 5.0,
     },
 };
@@ -62,8 +62,8 @@ rectangular rectangular2 = {
     },
     .normal = { 0.0, 0.0, 1.0 },
     .rectangular_fill = {
-        .fill_color = { 0.8, 0.0, 0.0 },
-        .Kd = 0.8, .Ks = 0.0, .T = 0.0,
+        .fill_color = { 0.6, 0.1, 0.1 },
+        .Kd = 0.8, .Ks = 0.0, .T = 0.0, .R=0.5,
         .index_of_refraction = 0.0, .phong_power = 5.0,
     },
 };
@@ -80,8 +80,8 @@ rectangular rectangular3 = {
     },
     .normal = { 1.0, 0.0, 0.0 },
     .rectangular_fill = {
-        .fill_color = { 0.0, 0.0, 0.8 },
-        .Kd = 0.8, .Ks = 0.0, .T = 0.0,
+        .fill_color = { 0.1, 0.1, 0.6 },
+        .Kd = 0.8, .Ks = 0.0, .T = 0.0, .R=0.5,
         .index_of_refraction = 0.0, .phong_power = 5.0,
     },
 };

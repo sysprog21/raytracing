@@ -398,7 +398,7 @@ static unsigned int ray_color(const point3 e, int t,
                    diffuse, specular, &fill);
 
         /* totalColor = localColor + Ks*reflection + T*refraction */
-        if (fill.Ks > 0) {
+        if (fill.R > 0) {
             reflection(r, d, surface_normal);
 
             /* if we hit something, add the color
@@ -407,7 +407,7 @@ static unsigned int ray_color(const point3 e, int t,
                           light, reflection_part,
                           bounces_left - 1,
                           hit_rec, hit_sphere)) {
-                multiply_vector(reflection_part, fill.Ks,
+                multiply_vector(reflection_part, (1.0-fill.Kd)*fill.R,
                                 reflection_part);
                 add_vector(object_color, reflection_part,
                            object_color);
