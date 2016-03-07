@@ -424,9 +424,6 @@ static unsigned int ray_color(const point3 e, int t,
             refraction(r, d, surface_normal, idx,
                        fill.index_of_refraction);
 
-            multiply_vector(d, -t1, p);
-            add_vector(e, p, p);
-
             if (ray_color(p, MIN_DISTANCE, r, rectangulars, spheres,
                           lights, refraction_part,
                           bounces_left - 1, hit_rec,

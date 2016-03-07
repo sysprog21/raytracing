@@ -23,8 +23,8 @@ sphere sphere2 = {
     .radius = 2,
     .sphere_fill = {
         .fill_color = { 0.8, 0.6, 0.4 },
-        .Kd = 0.75, .Ks = 0.0, .T = 0.2, .R=0.0,
-        .index_of_refraction = 0.0, .phong_power = 30.0
+        .Kd = 0.0, .Ks = 0.0, .T = 0.8, .R=0.0,
+        .index_of_refraction = 1.5, .phong_power = 30.0
     }
 };
 
