@@ -240,16 +240,18 @@ static double ray_hit_object(const point3 e, const point3 d,
     add_vector(biased_e, e, biased_e);
 
     double nearest = t1;
+    point3 tmpnormal;
 
     for (rectangular_node rec = rectangulars; rec; rec = rec->next) {
         if (rec == last_rectangular)
             continue;
 
-        if (rayRectangularIntersection(biased_e, d, &(rec->element), normal,
+        if (rayRectangularIntersection(biased_e, d, &(rec->element), tmpnormal,
                                        &t1) && t1<nearest) {
             /* hit is closest so far */
             *hit_rectangular = rec;
             nearest = t1;
+            COPY_POINT3(normal, tmpnormal);
         }
     }
 
@@ -258,15 +260,16 @@ static double ray_hit_object(const point3 e, const point3 d,
         if (sphere == last_sphere)
             continue;
 
-        if (raySphereIntersection(biased_e, d, &(sphere->element), normal,
+        if (raySphereIntersection(biased_e, d, &(sphere->element), tmpnormal,
                                   &t1) && t1<nearest) {
             *hit_sphere = sphere;
             *hit_rectangular = NULL;
             nearest = t1;
+            COPY_POINT3(normal, tmpnormal);
         }
     }
 
-    return t1;
+    return nearest;
 }
 
 /* @param d direction of ray
