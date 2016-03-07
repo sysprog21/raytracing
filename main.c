@@ -44,6 +44,7 @@ int main()
     delete_rectangular_list(&rectangulars);
     delete_sphere_list(&spheres);
     delete_light_list(&lights);
+    free(pixels);
     printf("Done!\n");
     return 0;
 }
