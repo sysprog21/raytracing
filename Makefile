@@ -4,10 +4,10 @@ all: $(EXEC)
 
 CC ?= gcc
 CFLAGS = \
-	-std=c99 -Wall -O0 -g
+	-std=gnu99 -Wall -O0 -g
 LDFLAGS = \
 	-lm
-	
+
 ifeq ($(PROFILE),1)
 PROF_FLAGS = -pg
 
