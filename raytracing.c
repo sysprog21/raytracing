@@ -8,6 +8,7 @@
 #define MAX_REFLECTION_BOUNCES	3
 #define MAX_DISTANCE 1000000000000.0
 #define MIN_DISTANCE 0.00001
+#define SAMPLES 4
 
 #define SQUARE(x) (x * x)
 #define MAX(a, b) (a > b ? a : b)
@@ -474,21 +475,28 @@ void raytracing(uint8_t *pixels, color background_color,
     /* calculate u, v, w */
     calculateBasisVectors(u, v, w, view);
 
+    int factor=sqrt(SAMPLES);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            rayConstruction(d, u, v, w, i, j, view, width, height);
-            normalize(d);
-            if (ray_color(view->vrp, 0.0, d, rectangulars, spheres,
-                          lights, object_color,
-                          MAX_REFLECTION_BOUNCES, NULL,
-                          NULL)) {
-                pixels[((i + (j*width)) * 3) + 0] = object_color[0] * 255;
-                pixels[((i + (j*width)) * 3) + 1] = object_color[1] * 255;
-                pixels[((i + (j*width)) * 3) + 2] = object_color[2] * 255;
-            } else {
-                pixels[((i + (j*width)) * 3) + 0] = background_color[0] * 255;
-                pixels[((i + (j*width)) * 3) + 1] = background_color[1] * 255;
-                pixels[((i + (j*width)) * 3) + 2] = background_color[2] * 255;
+            double r=0, g=0, b=0;
+            // MSAA
+            for(int s=0; s<SAMPLES; s++) {
+                rayConstruction(d, u, v, w, i*factor+s/factor, j*factor+s%factor, view, width*factor, height*factor);
+                if (ray_color(view->vrp, 0.0, d, rectangulars, spheres,
+                              lights, object_color,
+                              MAX_REFLECTION_BOUNCES, NULL,
+                              NULL)) {
+                    r += object_color[0];
+                    g += object_color[1];
+                    b += object_color[2];
+                } else {
+                    r += background_color[0];
+                    g += background_color[1];
+                    b += background_color[2];
+                }
+                pixels[((i + (j*width)) * 3) + 0] = r * 255 / SAMPLES;
+                pixels[((i + (j*width)) * 3) + 1] = g * 255 / SAMPLES;
+                pixels[((i + (j*width)) * 3) + 2] = b * 255 / SAMPLES;
             }
         }
     }
