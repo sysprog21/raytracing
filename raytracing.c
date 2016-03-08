@@ -4,6 +4,7 @@
 #include "math-toolkit.h"
 #include "primitives.h"
 #include "raytracing.h"
+#include "idx_stack.h"
 
 #define MAX_REFLECTION_BOUNCES	3
 #define MAX_DISTANCE 1000000000000.0
@@ -352,6 +353,7 @@ static void protect_color_overflow(color c)
 
 static unsigned int ray_color(const point3 e, double t,
                               const point3 d,
+                              idx_stack *stk,
                               const rectangular_node rectangulars,
                               const sphere_node spheres,
                               const light_node lights,
@@ -385,6 +387,8 @@ static unsigned int ray_color(const point3 e, double t,
            hit_rec->element.rectangular_fill :
            hit_sphere->element.sphere_fill;
 
+    void *hit_obj = hit_rec?(void *)hit_rec: (void *)hit_sphere;
+
     /* assume it is a shadow */
     SET_COLOR(object_color, 0.0, 0.0, 0.0);
 
@@ -413,17 +417,13 @@ static unsigned int ray_color(const point3 e, double t,
     }
 
     reflection(r, d, ip.normal);
-    double idx = 1.0, idx_pass=fill.index_of_refraction;
-    if (hit_rec&&hit_rec==last_rectangular){
-        idx = last_rectangular->element.rectangular_fill.index_of_refraction;
-        idx_pass = 1.0;
-        hit_rec = NULL;
-    }
-    else if (hit_sphere&&hit_sphere==last_sphere){
-        idx = last_sphere->element.sphere_fill.index_of_refraction;
-        idx_pass = 1.0;
-        hit_sphere = NULL;
-    }
+    double idx = idx_stack_top(stk).idx, idx_pass=fill.index_of_refraction;
+    if(idx_stack_top(stk).obj==hit_obj) {
+        idx_stack_pop(stk);
+        idx_pass = idx_stack_top(stk).idx;
+    }else
+        idx_stack_push(stk, (idx_stack_element) {.obj=hit_obj, .idx = fill.index_of_refraction});
+    
     refraction(rr, d, ip.normal, idx, idx_pass);
     double R = fill.T>0.1? fresnel(d, rr, ip.normal, idx, idx_pass): 1.0;
 
@@ -431,7 +431,8 @@ static unsigned int ray_color(const point3 e, double t,
     if (fill.R > 0) {
         /* if we hit something, add the color
         * that's a result of that */
-        if (ray_color(ip.point, MIN_DISTANCE, r, rectangulars, spheres,
+        int old_top = stk->top;
+        if (ray_color(ip.point, MIN_DISTANCE, r, stk, rectangulars, spheres,
                       lights, reflection_part,
                       bounces_left - 1,
                       hit_rec, hit_sphere)) {
@@ -441,6 +442,7 @@ static unsigned int ray_color(const point3 e, double t,
             add_vector(object_color, reflection_part,
                                object_color);
         }
+        stk->top = old_top;
     }
     /* calculate refraction ray */
     if (length(rr)>0.0 && fill.T > 0.0 && fill.index_of_refraction > 0.0) {
@@ -448,7 +450,7 @@ static unsigned int ray_color(const point3 e, double t,
         /*point3 pp;
         multiply_vector(rr, MIN_DISTANCE, pp);
         add_vector(p, pp, pp);*/
-        if (ray_color(ip.point, MIN_DISTANCE, rr, rectangulars, spheres,
+        if (ray_color(ip.point, MIN_DISTANCE, rr, stk,rectangulars, spheres,
                       lights, refraction_part,
                       bounces_left - 1, hit_rec,
                       hit_sphere)) {
@@ -475,14 +477,17 @@ void raytracing(uint8_t *pixels, color background_color,
     /* calculate u, v, w */
     calculateBasisVectors(u, v, w, view);
 
+    idx_stack stk;
+
     int factor=sqrt(SAMPLES);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             double r=0, g=0, b=0;
             // MSAA
             for(int s=0; s<SAMPLES; s++) {
+                idx_stack_init(&stk);
                 rayConstruction(d, u, v, w, i*factor+s/factor, j*factor+s%factor, view, width*factor, height*factor);
-                if (ray_color(view->vrp, 0.0, d, rectangulars, spheres,
+                if (ray_color(view->vrp, 0.0, d, &stk, rectangulars, spheres,
                               lights, object_color,
                               MAX_REFLECTION_BOUNCES, NULL,
                               NULL)) {
