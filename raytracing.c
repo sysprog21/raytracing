@@ -443,7 +443,7 @@ static unsigned int ray_color(const point3 e, double t,
         if (ray_color(ip.point, MIN_DISTANCE, rr, stk,rectangulars, spheres,
                       lights, refraction_part,
                       bounces_left - 1)) {
-            multiply_vector(refraction_part, 1,
+            multiply_vector(refraction_part, (1-R)*fill.T,
                             refraction_part);
             add_vector(object_color, refraction_part,
                            object_color);
