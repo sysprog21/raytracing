@@ -30,7 +30,7 @@ sphere sphere2 = {
     .radius = 3,
     .sphere_fill = {
         .fill_color = { 0.8, 0.6, 0.4 },
-        .Kd = 0.0, .Ks = 1.0, .T = 0.6, .R=1.0,
+        .Kd = 0.0, .Ks = 1.0, .T = 1.0, .R=1.0,
         .index_of_refraction = 1.5, .phong_power = 30.0
     }
 };
