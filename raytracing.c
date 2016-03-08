@@ -44,6 +44,8 @@ static int raySphereIntersection(const point3 ray_e,
 
     subtract_vector(p, sph->center, surface_normal);
     normalize(surface_normal);
+    if(dot_product(surface_normal, ray_d)>0.0)
+        multiply_vector(surface_normal, -1, surface_normal);
 
 	return 1;
 }
@@ -128,6 +130,9 @@ static int rayRectangularIntersection(const point3 ray_e,
     
     COPY_POINT3(surface_normal, rec->normal);
     subtract_vector(intersect, ray_e, intersect);
+
+    if(dot_product(surface_normal, ray_d)>0.0)
+        multiply_vector(surface_normal, -1, surface_normal);
     return 1;
 }
 
