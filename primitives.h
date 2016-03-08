@@ -39,6 +39,11 @@ typedef struct {
     point3 vup;
 } viewpoint;
 
+typedef struct {
+    point3 point;
+    point3 normal;
+} intersection;
+
 #define COPY_OBJECT_FILL(a,b)	{ (a).fill_color[0] = (b).fill_color[0]; \
 	(a).fill_color[1] = (b).fill_color[1]; \
 	(a).fill_color[2] = (b).fill_color[2]; \
