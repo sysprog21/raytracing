@@ -249,10 +249,8 @@ static intersection ray_hit_object(const point3 e, const point3 d,
                              double t0, double t1,
                              const rectangular_node rectangulars,
                              rectangular_node *hit_rectangular,
-                             const rectangular_node last_rectangular,
                              const sphere_node spheres,
-                             sphere_node *hit_sphere,
-                             const sphere_node last_sphere)
+                             sphere_node *hit_sphere)
 {
     /* set these to not hit */
     *hit_rectangular = NULL;
@@ -266,9 +264,6 @@ static intersection ray_hit_object(const point3 e, const point3 d,
     intersection result, tmpresult;
 
     for (rectangular_node rec = rectangulars; rec; rec = rec->next) {
-        if (rec == last_rectangular)
-            continue;
-
         if (rayRectangularIntersection(biased_e, d, &(rec->element), &tmpresult,
                                        &t1) && t1<nearest) {
             /* hit is closest so far */
@@ -357,9 +352,7 @@ static unsigned int ray_color(const point3 e, double t,
                               const rectangular_node rectangulars,
                               const sphere_node spheres,
                               const light_node lights,
-                              color object_color, int bounces_left,
-                              const rectangular_node last_rectangular,
-                              const sphere_node last_sphere)
+                              color object_color, int bounces_left)
 {
     rectangular_node hit_rec = NULL, light_hit_rec = NULL;
     sphere_node hit_sphere = NULL, light_hit_sphere = NULL;
@@ -377,8 +370,7 @@ static unsigned int ray_color(const point3 e, double t,
 
     /* check for intersection with a sphere or a rectangular */
     intersection ip= ray_hit_object(e, d, t, MAX_DISTANCE, rectangulars,
-                        &hit_rec, last_rectangular, spheres, &hit_sphere,
-                        last_sphere);
+                        &hit_rec, spheres, &hit_sphere);
     if (!hit_rec && !hit_sphere)
         return 0;
 
@@ -401,8 +393,8 @@ static unsigned int ray_color(const point3 e, double t,
          * because we don't care about this normal
         */
         ray_hit_object(ip.point, _l, MIN_DISTANCE, length(l),
-                       rectangulars, &light_hit_rec, hit_rec,
-                       spheres, &light_hit_sphere, hit_sphere);
+                       rectangulars, &light_hit_rec,
+                       spheres, &light_hit_sphere);
         /* the light was not block by itself(lit object) */
         if (light_hit_rec || light_hit_sphere)
             continue;
@@ -434,9 +426,7 @@ static unsigned int ray_color(const point3 e, double t,
         int old_top = stk->top;
         if (ray_color(ip.point, MIN_DISTANCE, r, stk, rectangulars, spheres,
                       lights, reflection_part,
-                      bounces_left - 1,
-                      hit_rec, hit_sphere)) {
-
+                      bounces_left - 1)) {
             multiply_vector(reflection_part, R*(1.0-fill.Kd)*fill.R,
                             reflection_part);
             add_vector(object_color, reflection_part,
@@ -452,8 +442,7 @@ static unsigned int ray_color(const point3 e, double t,
         add_vector(p, pp, pp);*/
         if (ray_color(ip.point, MIN_DISTANCE, rr, stk,rectangulars, spheres,
                       lights, refraction_part,
-                      bounces_left - 1, hit_rec,
-                      hit_sphere)) {
+                      bounces_left - 1)) {
             multiply_vector(refraction_part, 1,
                             refraction_part);
             add_vector(object_color, refraction_part,
@@ -489,8 +478,7 @@ void raytracing(uint8_t *pixels, color background_color,
                 rayConstruction(d, u, v, w, i*factor+s/factor, j*factor+s%factor, view, width*factor, height*factor);
                 if (ray_color(view->vrp, 0.0, d, &stk, rectangulars, spheres,
                               lights, object_color,
-                              MAX_REFLECTION_BOUNCES, NULL,
-                              NULL)) {
+                              MAX_REFLECTION_BOUNCES)) {
                     r += object_color[0];
                     g += object_color[1];
                     b += object_color[2];
