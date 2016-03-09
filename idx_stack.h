@@ -1,5 +1,5 @@
-#ifndef _IDX_STACK_H_
-#define _IDX_STACK_H_
+#ifndef _RAY_IDX_STACK_H
+#define _RAY_IDX_STACK_H
 
 #define MAX_STACK_SIZE 16
 
