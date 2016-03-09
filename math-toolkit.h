@@ -50,7 +50,6 @@ void multiply_vector(const double *a, double b, double *out)
         out[i] = a[i] * b;
 }
 
-
 static inline
 void cross_product(const double *v1, const double *v2, double *out)
 {
@@ -69,7 +68,8 @@ double dot_product(const double *v1, const double *v2)
 }
 
 static inline
-void scalar_triple_product(const double *u, const double *v, const double *w, double *out)
+void scalar_triple_product(const double *u, const double *v, const double *w,
+                           double *out)
 {
     cross_product(v, w, out);
     multiply_vectors(u, out, out);
