@@ -16,6 +16,7 @@ typedef struct {
     double Kd; /**< the diffuse component */
     double Ks; /**< the specular */
     double T;  /**< transmittance (fraction of light passed per unit) */
+    double R;  /**< reflectance (effectiveness in reflecting)*/
     double index_of_refraction;
     double phong_power; /**< the Phong cosine power for highlights */
 } object_fill;
@@ -38,11 +39,17 @@ typedef struct {
     point3 vup;
 } viewpoint;
 
+typedef struct {
+    point3 point;
+    point3 normal;
+} intersection;
+
 #define COPY_OBJECT_FILL(a,b)	{ (a).fill_color[0] = (b).fill_color[0]; \
 	(a).fill_color[1] = (b).fill_color[1]; \
 	(a).fill_color[2] = (b).fill_color[2]; \
 	(a).Kd = (b).Kd; \
 	(a).Ks = (b).Ks; \
+    (a).R  = (b).R;  \
 	(a).phong_power = (b).phong_power; \
 	(a).T = (b).T; \
 	(a).index_of_refraction = (b).index_of_refraction; }
