@@ -204,7 +204,7 @@ static void reflection(point3 r, const point3 d, const point3 n)
 static void refraction(point3 t, const point3 I, const point3 N,
                        double n1, double n2)
 {
-    double eta = n1/n2;
+    double eta = n1 / n2;
     double dot_NI = dot_product(N,I);
     double k = 1.0 - eta * eta * (1.0 - dot_NI * dot_NI);
     if (k < 0.0 || n2 <= 0.0)
@@ -298,12 +298,11 @@ static void rayConstruction(point3 d, const point3 u, const point3 v,
     double ymax =  0.0175;
     double focal = 0.05;
 
-    double u_s, v_s, w_s;
     point3 u_tmp, v_tmp, w_tmp, s;
 
-    w_s = focal;
-    u_s = xmin + ((xmax - xmin) * (float) i / (width - 1));
-    v_s = ymax + ((ymin - ymax) * (float) j / (height - 1));
+    double w_s = focal;
+    double u_s = xmin + ((xmax - xmin) * (float) i / (width - 1));
+    double v_s = ymax + ((ymin - ymax) * (float) j / (height - 1));
 
     /* s = e + u_s * u + v_s * v + w_s * w */
     multiply_vector(u, u_s, u_tmp);
@@ -470,7 +469,7 @@ void raytracing(uint8_t *pixels, color background_color,
     int factor = sqrt(SAMPLES);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            double r=0, g = 0, b = 0;
+            double r = 0, g = 0, b = 0;
             /* MSAA */
             for (int s = 0; s < SAMPLES; s++) {
                 idx_stack_init(&stk);
