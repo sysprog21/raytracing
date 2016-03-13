@@ -26,7 +26,7 @@ OBJS := \
 $(EXEC): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-main.c: use-models.h
+main.o: use-models.h
 use-models.h: models.inc Makefile
 	@echo '#include "models.inc"' > use-models.h
 	@egrep "^(light|sphere|rectangular) " models.inc | \
