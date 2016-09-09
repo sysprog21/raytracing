@@ -38,6 +38,10 @@ use-models.h: models.inc Makefile
 	        -e 's/rectangular[0-9]/(\&&, \&rectangulars);/g' \
 	        -e 's/ = {//g' >> use-models.h
 
+check: $(EXEC)
+	@./$(EXEC) && diff -u baseline.ppm out.ppm || (echo Fail; exit)
+	@echo "Verified OK"
+
 clean:
 	$(RM) $(EXEC) $(OBJS) use-models.h \
 		out.ppm gmon.out
